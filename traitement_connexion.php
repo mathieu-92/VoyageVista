@@ -6,13 +6,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mail = $_POST['mail'];
     $mdp = $_POST['mdp'];
 
-    $sql = "SELECT * FROM Utilisateur WHERE mail = :mail";
+    // Modification ici : on remplace 'mail' par 'Email'
+    $sql = "SELECT * FROM Utilisateur WHERE Email = :mail"; 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':mail' => $mail]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($mdp, $user['mdp'])) {
-        // Succès : on enregistre les infos dans la SESSION
         $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
         $_SESSION['nom'] = $user['nom'];
         $_SESSION['prenom'] = $user['prenom'];

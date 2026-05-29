@@ -26,7 +26,10 @@
                     <input type="text" name="prenom" placeholder="Prénom" required>
                 </div>
             </div>
-
+<div class="input-group">
+    <label><i class="fa-solid fa-calendar"></i> Date de naissance</label>
+    <input type="date" name="datedenaissance" required>
+</div>
             <div class="input-group">
                 <label><i class="fa-solid fa-envelope"></i> Email</label>
                 <input type="email" name="mail" placeholder="votre@email.com" required>
