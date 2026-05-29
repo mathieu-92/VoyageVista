@@ -119,6 +119,13 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     transition: transform 0.3s;
 }
+
+.card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    object-position: center;
+}
 .card:hover { transform: translateY(-5px); }
 .card-content { padding: 20px; }
 .card-content h3 { margin-bottom: 10px; color: #2C3E50; }
