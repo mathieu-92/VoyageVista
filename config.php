@@ -3,7 +3,7 @@
 $host = 'localhost';
 $db   = 'voyagevista'; // Remplace par le nom exact de ta base sur phpMyAdmin
 $user = 'root';        // Par défaut sur WAMP/XAMPP
-$pass = '';            // Laisse vide sur Windows, ou met 'root' si tu es sur Mac (MAMP)
+$pass = 'root';            // Laisse vide sur Windows, ou met 'root' si tu es sur Mac (MAMP)
 $charset = 'utf8mb4';
 
 // Configuration des options de PDO

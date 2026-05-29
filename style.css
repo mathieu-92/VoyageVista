@@ -1,1 +1,125 @@
-test puta messi
+/* --- RESET DE BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+body {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* --- NAVIGATION --- */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2C3E50;
+}
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- BOUTONS --- */
+.btn-primary {
+    background: #3498DB;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-primary:hover { background: #2980B9; }
+
+.btn-outline {
+    background: transparent;
+    color: #3498DB;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 2px solid #3498DB;
+    font-weight: bold;
+    transition: 0.3s;
+}
+.btn-outline:hover { background: #3498DB; color: white; }
+
+.btn-search {
+    background: #2ECC71;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-search:hover { background: #27AE60; }
+
+/* --- BARRE DE RECHERCHE (HERO) --- */
+.hero-search {
+    background: linear-gradient(rgba(44, 62, 80, 0.7), rgba(44, 62, 80, 0.7)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80');
+    background-size: cover;
+    background-position: center;
+    padding: 80px 20px;
+    text-align: center;
+}
+.search-tabs { margin-bottom: 20px; }
+.search-tabs button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-weight: bold;
+}
+.search-tabs button.active { background: #3498DB; }
+.search-bar {
+    display: inline-flex;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.search-bar input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    outline: none;
+}
+
+/* --- GRILLE DES RESULTATS --- */
+.content-layout { padding: 50px; }
+.results-section h2 { margin-bottom: 30px; color: #2C3E50; font-size: 2em; }
+.grid-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+.card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+}
+.card:hover { transform: translateY(-5px); }
+.card-content { padding: 20px; }
+.card-content h3 { margin-bottom: 10px; color: #2C3E50; }
+.card-content p { color: #666; margin-bottom: 20px; font-size: 0.9em; line-height: 1.5; height: 40px; overflow: hidden;}
