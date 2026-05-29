@@ -3,36 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <title>Inscription - VoyageVista</title>
-    </head>
-<body>
-    <h2>Créer un compte VoyageVista</h2>
-    
-    <form action="traitement_inscription.php" method="POST">
-        <label for="prenom">Prénom :</label>
-        <input type="text" id="prenom" name="prenom" required><br><br>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="auth-page">
 
-        <label for="nom">Nom :</label>
-        <input type="text" id="nom" name="nom" required><br><br>
+    <div class="auth-container">
+        <div class="auth-header">
+            <img src="image/logo.png" alt="VoyageVista" style="height: 60px;">
+            <h2>Créer un compte</h2>
+            <p>Rejoignez l'aventure VoyageVista</p>
+        </div>
 
-        <label for="email">Email :</label>
-        <input type="email" id="email" name="email" required><br><br>
+        <form action="traitement_inscription.php" method="POST" class="auth-form">
+            <div class="input-row">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-user"></i> Nom</label>
+                    <input type="text" name="nom" placeholder="Nom" required>
+                </div>
+                <div class="input-group">
+                    <label><i class="fa-solid fa-user"></i> Prénom</label>
+                    <input type="text" name="prenom" placeholder="Prénom" required>
+                </div>
+            </div>
 
-        <label for="mdp">Mot de passe :</label>
-        <input type="password" id="mdp" name="mdp" required><br><br>
+            <div class="input-group">
+                <label><i class="fa-solid fa-envelope"></i> Email</label>
+                <input type="email" name="mail" placeholder="votre@email.com" required>
+            </div>
 
-        <label for="datedenaissance">Date de naissance :</label>
-        <input type="date" id="datedenaissance" name="datedenaissance" required><br><br>
+            <div class="input-group">
+                <label><i class="fa-solid fa-lock"></i> Mot de passe</label>
+                <input type="password" name="mdp" placeholder="••••••••" required>
+            </div>
 
-        <label for="role">Je suis un :</label>
-        <select id="role" name="role">
-            <option value="Voyageur">Voyageur (pour réserver)</option>
-            <option value="Prestataire">Prestataire / Admin (pour proposer des offres)</option>
-        </select><br><br>
+            <button type="submit" class="btn-primary full-width">S'inscrire</button>
+        </form>
 
-        <input type="checkbox" id="consentement" name="consentement" required>
-        <label for="consentement">J'accepte les conditions d'utilisation</label><br><br>
+        <div class="auth-footer">
+            <p>Déjà membre ? <a href="connexion.php">Connectez-vous ici</a></p>
+        </div>
+    </div>
 
-        <button type="submit">S'inscrire</button>
-    </form>
 </body>
-</html> 
+</html>
