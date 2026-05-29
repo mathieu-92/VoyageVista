@@ -129,4 +129,4 @@ body {
 .card:hover { transform: translateY(-5px); }
 .card-content { padding: 20px; }
 .card-content h3 { margin-bottom: 10px; color: #2C3E50; }
-.card-content p { color: #666; margin-bottom: 20px; font-size: 0.9em; line-height: 1.5; height: 40px; overflow: hidden;}
+.card-content p { color: #666; margin-bottom: 20px; font-size: 0.9em; line-height: 1.5; height: 40px; overflow: hidden;}  
