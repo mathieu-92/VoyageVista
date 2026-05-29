@@ -35,4 +35,4 @@
         <button type="submit">S'inscrire</button>
     </form>
 </body>
-</html>
+</html> 
