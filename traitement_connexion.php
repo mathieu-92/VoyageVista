@@ -13,13 +13,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
 
     if ($user && password_verify($mdp, $user['mdp'])) {
+        // On enregistre les infos, ET SURTOUT LE RÔLE
         $_SESSION['id_utilisateur'] = $user['id_utilisateur'];
-        $_SESSION['nom'] = $user['nom'];
-        $_SESSION['prenom'] = $user['prenom'];
+        $_SESSION['nom'] = $user['Nom'];
+        $_SESSION['prenom'] = $user['Prenom'];
+        $_SESSION['role'] = $user['role']; // <-- La ligne magique
 
-        header('Location: index.php');
+        // Le tri directionnel
+        if ($_SESSION['role'] === 'Prestataire') {
+            header('Location: dashboard_prestataire.php');
+        } else {
+            header('Location: index.php'); // Client normal
+        }
         exit();
-    } else {
+    }else {
         die("Email ou mot de passe incorrect.");
     }
 }

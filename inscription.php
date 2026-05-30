@@ -26,10 +26,12 @@
                     <input type="text" name="prenom" placeholder="Prénom" required>
                 </div>
             </div>
-<div class="input-group">
-    <label><i class="fa-solid fa-calendar"></i> Date de naissance</label>
-    <input type="date" name="datedenaissance" required>
-</div>
+            
+            <div class="input-group">
+                <label><i class="fa-solid fa-calendar"></i> Date de naissance</label>
+                <input type="date" name="datedenaissance" required>
+            </div>
+            
             <div class="input-group">
                 <label><i class="fa-solid fa-envelope"></i> Email</label>
                 <input type="email" name="mail" placeholder="votre@email.com" required>
@@ -40,6 +42,17 @@
                 <input type="password" name="mdp" placeholder="••••••••" required>
             </div>
 
+            <div class="form-group" style="margin-bottom: 20px; text-align: left;">
+                <p style="margin-bottom: 8px; color: #555;"><strong>Je souhaite créer un compte :</strong></p>
+                
+                <label style="margin-right: 15px; cursor: pointer;">
+                    <input type="radio" name="role" value="Client" checked> Voyageur
+                </label>
+                
+                <label style="cursor: pointer;">
+                    <input type="radio" name="role" value="Prestataire"> Partenaire Pro
+                </label>
+            </div>
             <button type="submit" class="btn-primary full-width">S'inscrire</button>
         </form>
 
