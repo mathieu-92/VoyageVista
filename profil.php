@@ -56,12 +56,12 @@ try {
 <body class="auth-page"> <div class="auth-container" style="max-width: 600px;">
         <div class="auth-header">
             <h2><i class="fa-solid fa-circle-user"></i> Espace Membre</h2>
-            <p>Bienvenue sur votre profil, <?= htmlspecialchars($user['prenom']) ?> !</p>
+            <p>Bienvenue sur votre profil, <?= htmlspecialchars($user['Prenom']) ?> !</p>
         </div>
 
         <div class="profile-card">
-            <p><i class="fa-solid fa-id-card"></i> <strong>Nom :</strong> <?= htmlspecialchars($user['nom']) ?></p>
-            <p><i class="fa-solid fa-user"></i> <strong>Prénom :</strong> <?= htmlspecialchars($user['prenom']) ?></p>
+            <p><i class="fa-solid fa-id-card"></i> <strong>Nom :</strong> <?= htmlspecialchars($user['Nom']) ?></p>
+            <p><i class="fa-solid fa-user"></i> <strong>Prénom :</strong> <?= htmlspecialchars($user['Prenom']) ?></p>
             <p><i class="fa-solid fa-envelope"></i> <strong>Email :</strong> <?= htmlspecialchars($user['Email']) ?></p>
             
             <?php if(!empty($user['datedenaissance'])): ?>
