@@ -61,4 +61,4 @@ $prix_total = $total_stmt->fetchColumn() ?: 0;
             <i class="fa-solid fa-print"></i> Imprimer l'itinéraire
         </button>
     </div>
-</div>
+</div> 
