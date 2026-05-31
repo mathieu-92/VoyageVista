@@ -1,10 +1,3 @@
-Salut bossito ! Aucun problème, je t'ai ressorti et reconstruit le code exact du fichier **`activites.php`** qu'on a fait hier.
-
-Comme on l'avait vu, ce script utilise une **jointure SQL (`JOIN`)** pour lier tes activités à tes destinations. Il est blindé avec des vérifications (`isset` et `!empty`) sur les colonnes optionnelles (comme la durée ou la description) pour que ton affichage ne plante jamais, même s'il manque une donnée dans ta base.
-
-Voici le code complet, prêt à être copié-collé, avec la barre de navigation et le design 100% alignés sur ce qu'on vient de valider aujourd'hui :
-
-```php
 <?php
 session_start();
 require_once 'config.php';

@@ -36,13 +36,13 @@ $destinations = $stmt->fetchAll();
         margin: 0 auto !important; /* Centre la barre horizontalement */
     }
 
-    .search-bar .input-group {
-        display: flex !important;
+   .search-bar .input-group {
+        display: flex; /* <-- Le changement est ici, plus de !important */
         align-items: center !important;
-        background-color: transparent !important; /* Fond transparent pour les cases */
+        background-color: transparent !important;
         padding: 0 15px !important;
         height: 40px !important;
-        border-right: 1px solid #ddd; /* Petite ligne grise de séparation entre les cases */
+        border-right: 1px solid #ddd;
     }
 
     /* Enlève la ligne de séparation juste avant le bouton vert */
@@ -159,9 +159,15 @@ $destinations = $stmt->fetchAll();
                 <button type="button" onclick="changeTab('sejours', this)"><i class="fa-solid fa-umbrella-beach"></i> Séjours</button>
                 <button type="button" onclick="changeTab('activites', this)"><i class="fa-solid fa-person-running"></i> Activités</button>
             </div>
+            
             <form action="traitement_recherche.php" method="GET" class="search-bar">
                 
                 <input type="hidden" name="type_recherche" id="type_recherche" value="vols">
+
+                <div class="input-group" id="container-origine">
+                    <i class="fa-solid fa-plane-departure"></i>
+                    <input type="text" name="origine" id="input-origine" placeholder="De quelle ville ?">
+                </div>
 
                 <div class="input-group">
                     <i class="fa-solid fa-map-marker-alt"></i>
@@ -236,23 +242,28 @@ $destinations = $stmt->fetchAll();
 
             document.getElementById('type_recherche').value = type;
 
+            let origineContainer = document.getElementById('container-origine');
             let destInput = document.getElementById('input-dest');
             let retourContainer = document.getElementById('container-retour');
             let voyageursContainer = document.getElementById('container-voyageurs');
 
             if (type === 'vols') {
+                origineContainer.style.display = "flex";
                 destInput.placeholder = "Où voulez-vous aller ?";
                 retourContainer.style.display = "flex";
                 voyageursContainer.style.display = "none";
             } else if (type === 'hotels') {
+                origineContainer.style.display = "none";
                 destInput.placeholder = "Dans quelle ville ?";
                 retourContainer.style.display = "flex";
                 voyageursContainer.style.display = "flex";
             } else if (type === 'sejours') {
+                origineContainer.style.display = "none";
                 destInput.placeholder = "Destination du séjour ?";
                 retourContainer.style.display = "flex";
                 voyageursContainer.style.display = "flex";
             } else if (type === 'activites') {
+                origineContainer.style.display = "none";
                 destInput.placeholder = "Où cherchez-vous une activité ?";
                 retourContainer.style.display = "none"; 
                 voyageursContainer.style.display = "flex";
