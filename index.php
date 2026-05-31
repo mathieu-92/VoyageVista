@@ -88,12 +88,10 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     margin-top: 5px;
 }
 
-<<<<<<< HEAD
 /* Affichage au survol */
 .user-profile-menu:hover .dropdown-content {
     display: block;
 }
-=======
     /* 2. Le bas des cartes (Séparation du prix et du bouton) */
     .card-content {
         display: flex;
@@ -130,7 +128,6 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
         padding-top: 15px;
         margin-top: auto; /* Force le footer à rester collé en bas de la carte */
     }
->>>>>>> 67d014e86d2e645da4578480909b97d11a5835ad
 
 .dropdown-content a {
     color: #333;
