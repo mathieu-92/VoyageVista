@@ -89,6 +89,64 @@ $destinations = $stmt->fetchAll();
     .btn-search:hover {
         background-color: #218838 !important;
     }
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .view-all {
+        color: #007BFF;
+        text-decoration: none;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px; /* Espace entre le texte et la flèche */
+        transition: color 0.3s ease;
+    }
+    .view-all:hover {
+        color: #0056b3;
+    }
+    .view-all i {
+        transition: transform 0.3s ease; /* Prépare l'animation */
+    }
+    .view-all:hover i {
+        transform: translateX(6px); /* Fait glisser la flèche vers la droite au survol */
+    }
+
+    /* 2. Le bas des cartes (Séparation du prix et du bouton) */
+    .card-content {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Permet au contenu de remplir la carte */
+    }
+    .desc {
+        flex-grow: 1; /* Pousse le footer tout en bas */
+        margin-bottom: 15px;
+    }
+    .card-footer {
+        display: flex;
+        justify-content: space-between; /* Éloigne le prix (à gauche) du bouton (à droite) */
+        align-items: center; /* Centre verticalement */
+        border-top: 1px solid #eee; /* Petite ligne de séparation propre */
+        padding-top: 15px;
+        margin-top: auto; /* Force le footer à rester collé en bas de la carte */
+    }
+
+    /* 3. Le bouton "Découvrir" */
+    .card-footer .btn-primary {
+        background-color: #007BFF !important;
+        border-radius: 20px !important; /* Forme de pilule pour le design moderne */
+        padding: 8px 18px !important;
+        font-size: 0.9em !important;
+        font-weight: bold;
+        text-decoration: none;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .card-footer .btn-primary:hover {
+        background-color: #0056b3 !important;
+        transform: scale(1.05); /* Léger effet de zoom au survol */
+    }
 </style>
 </head>
 <body>
