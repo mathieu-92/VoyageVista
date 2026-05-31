@@ -5,16 +5,18 @@ error_reporting(E_ALL);
 session_start();
 require_once 'config.php';
 
-// 1. Sécurité : Si le panier est vide, rien à faire ici, on retourne à l'accueil
-if (empty($_SESSION['panier'])) {
+// 1. Sécurité : Si le panier est vide et qu'on n'a pas de message de succès, retour à l'accueil
+if (empty($_SESSION['panier']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
     exit();
 }
 
 // Calcul du total pour l'affichage
 $total = 0;
-foreach ($_SESSION['panier'] as $item) {
-    $total += $item['prix_estime'] * $item['voyageurs'];
+if (isset($_SESSION['panier'])) {
+    foreach ($_SESSION['panier'] as $item) {
+        $total += $item['prix_estime'] * $item['voyageurs'];
+    }
 }
 
 // 2. Traitement du formulaire de paiement quand il est soumis
@@ -28,9 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
             // On commence une transaction PDO pour être sûr que toutes les insertions fonctionnent ensemble
             $pdo->beginTransaction();
 
-            // Pour chaque voyage dans le panier, on va créer une ligne dans la table Reservation
+            // A. Enregistrement des réservations
             foreach ($_SESSION['panier'] as $item) {
-                
                 $sql = "INSERT INTO Reservation (
                             date_commande, prix_total_calcule, statut_paiement, notification, 
                             nb_bebe, nb_jeunes, nb_etudiant, nb_adultes, nb_seniors, 
@@ -49,10 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
                     ':date_fin' => $item['fin'],
                     ':id_utilisateur' => $_SESSION['id_utilisateur']
                 ]);
-                
-                // Optionnel : Si tu voulais lier à un hôtel ou un vol via tes tables Contenir_... 
-                // Tu récupérerais l'ID de la réservation ici avec $id_reservation = $pdo->lastInsertId();
             }
+
+            // B. Création de la notification officielle pour l'utilisateur
+            $msg = "Félicitations ! Votre paiement de " . $total . " € a été accepté. Votre séjour est confirmé.";
+            // Remarque : adapte le nom de la table "notification" selon ce qui est dans ta base de données
+            $sql_notif = "INSERT INTO notification (id_utilisateur, message, date_creation, lue) VALUES (:id_user, :msg, NOW(), 0)";
+            $stmt_notif = $pdo->prepare($sql_notif);
+            $stmt_notif->execute([
+                ':id_user' => $_SESSION['id_utilisateur'],
+                ':msg' => $msg
+            ]);
 
             // Si tout est bon, on valide définitivement dans la base de données
             $pdo->commit();
@@ -74,64 +82,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Paiement - VoyageVista</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Sécurisé - VoyageVista</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .card-icons { font-size: 2.5em; color: #555; text-align: center; margin-bottom: 20px; }
+        .card-icons i { margin: 0 10px; }
+    </style>
 </head>
-<body>
-    <header class="top-nav">
-        <h1>VoyageVista</h1>
-        <a href="index.php" class="btn-outline">Retour à l'accueil</a>
+<body style="background-color: #f8f9fa;">
+
+    <header class="top-nav" style="background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div class="logo">
+            <a href="index.php"><img src="image/logo.png" alt="VoyageVista Logo" style="height: 50px;"></a>
+        </div>
+        
+        <div class="user-actions">
+            <?php if(isset($_SESSION['id_utilisateur'])): ?>
+                <div class="user-profile-menu">
+                    <div class="profile-trigger" style="color: #333;">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span><?= htmlspecialchars($_SESSION['prenom']) ?></span>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <a href="panier.php" class="btn-outline" style="color: #007BFF; border-color: #007BFF;">Retour au panier</a>
+        </div>
     </header>
 
-    <main style="padding: 40px; max-width: 600px; margin: auto;">
+    <main class="payment-container">
         
         <?php if (!empty($message_succes)): ?>
-            <div style="background: #D4EDDA; color: #155724; padding: 20px; border-radius: 8px; text-align: center;">
-                <h2><?= $message_succes ?></h2>
-                <p>Retrouvez vos alertes dans vos notifications.</p>
-                <a href="index.php" class="btn-primary" style="display:inline-block; margin-top:15px;">Retourner à l'accueil</a>
+            <div style="text-align: center;">
+                <i class="fa-solid fa-circle-check" style="font-size: 5em; color: #28a745; margin-bottom: 20px;"></i>
+                <h2 style="color: #28a745;"><?= $message_succes ?></h2>
+                <p style="color: #666; font-size: 1.1em; margin-bottom: 30px;">Un reçu vous a été envoyé et une alerte a été ajoutée à vos notifications.</p>
+                <a href="index.php" class="btn-primary" style="text-decoration: none; padding: 12px 25px;">Retourner à l'accueil</a>
             </div>
 
         <?php elseif (!isset($_SESSION['id_utilisateur'])): ?>
-            <div style="background: #FFF3CD; color: #856404; padding: 25px; border-radius: 8px; text-align: center; border: 1px solid #ffeeba;">
-                <h2>🔒 Connexion obligatoire</h2>
-                <p>Pour finaliser votre réservation et procéder au paiement de vos <strong><?= $total ?> €</strong> de voyage, vous devez posséder un compte VoyageVista.</p>
-                <br>
-                <div style="display: flex; justify-content: space-around;">
-                    <a href="connexion.php" class="btn-primary" style="padding: 10px 20px;">Se connecter</a>
-                    <a href="inscription.php" class="btn-outline" style="padding: 10px 20px;">Créer un compte</a>
+            <div style="text-align: center;">
+                <i class="fa-solid fa-lock" style="font-size: 4em; color: #ffc107; margin-bottom: 20px;"></i>
+                <h2 style="color: #333;">Connexion obligatoire</h2>
+                <p style="color: #666; margin-bottom: 30px;">Pour finaliser votre réservation et procéder au paiement de <strong><?= $total ?> €</strong>, vous devez posséder un compte VoyageVista.</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <a href="connexion.php" class="btn-primary" style="text-decoration: none;">Se connecter</a>
+                    <a href="inscription.php" class="btn-outline" style="text-decoration: none;">Créer un compte</a>
                 </div>
             </div>
 
         <?php else: ?>
-            <h2>💳 Sécurisation du paiement</h2>
-            <p>Utilisateur connecté : <strong><?= htmlspecialchars($_SESSION['prenom']) ?> <?= htmlspecialchars($_SESSION['nom']) ?></strong></p>
-            
-            <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h3>Récapitulatif du montant : <span style="color: #2ECC71;"><?= $total ?> €</span></h3>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #333; margin-bottom: 10px;"><i class="fa-solid fa-shield-halved" style="color: #28a745;"></i> Paiement Sécurisé</h2>
+                <div style="background: #f8f9fa; border: 2px dashed #007BFF; padding: 15px; border-radius: 8px; display: inline-block;">
+                    <span style="font-size: 1.2em; color: #555;">Montant à régler :</span>
+                    <strong style="font-size: 1.5em; color: #333; margin-left: 10px;"><?= $total ?> €</strong>
+                </div>
             </div>
 
-            <form action="paiement.php" method="POST" style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                <label for="carte_nom">Nom sur la carte :</label><br>
-                <input type="text" id="carte_nom" name="carte_nom" value="<?= htmlspecialchars($_SESSION['nom']) ?> <?= htmlspecialchars($_SESSION['prenom']) ?>" required style="width:100%; padding:8px; margin-top:5px;"><br><br>
+            <div class="card-icons">
+                <i class="fa-brands fa-cc-visa" style="color: #1a1f71;"></i>
+                <i class="fa-brands fa-cc-mastercard" style="color: #eb001b;"></i>
+                <i class="fa-brands fa-cc-amex" style="color: #002663;"></i>
+            </div>
 
-                <label for="carte_num">Numéro de carte :</label><br>
-                <input type="text" id="carte_num" placeholder="4532 71XX XXXX XXXX" maxlength="16" required style="width:100%; padding:8px; margin-top:5px;"><br><br>
+            <form action="paiement.php" method="POST" style="text-align: left;">
+                <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Nom sur la carte</label>
+                <input type="text" name="carte_nom" value="<?= htmlspecialchars($_SESSION['prenom'] ?? '') ?>" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
 
-                <div style="display: flex; gap: 20px;">
+                <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Numéro de carte</label>
+                <input type="text" placeholder="4532 71XX XXXX XXXX" maxlength="19" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+
+                <div style="display: flex; gap: 20px; margin-bottom: 25px;">
                     <div style="flex: 1;">
-                        <label for="carte_date">Date d'expiration :</label>
-                        <input type="text" id="carte_date" placeholder="MM/AA" maxlength="5" required style="width:100%; padding:8px; margin-top:5px;">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">Expiration</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5" required style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
                     </div>
                     <div style="flex: 1;">
-                        <label for="carte_cvv">CVV :</label>
-                        <input type="password" id="carte_cvv" placeholder="123" maxlength="3" required style="width:100%; padding:8px; margin-top:5px;">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">CVV</label>
+                        <input type="password" placeholder="123" maxlength="3" required style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
                     </div>
                 </div>
-                <br><br>
 
-                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.1em;">
-                    Confirmer et Payer <?= $total ?> €
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.2em; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer;">
+                    <i class="fa-solid fa-lock"></i> Confirmer et Payer
                 </button>
             </form>
         <?php endif; ?>
