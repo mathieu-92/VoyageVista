@@ -88,10 +88,49 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     margin-top: 5px;
 }
 
+<<<<<<< HEAD
 /* Affichage au survol */
 .user-profile-menu:hover .dropdown-content {
     display: block;
 }
+=======
+    /* 2. Le bas des cartes (Séparation du prix et du bouton) */
+    .card-content {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Permet au contenu de remplir la carte */
+    }
+    .desc {
+        flex-grow: 1; /* Pousse le footer tout en bas */
+        margin-bottom: 15px;
+    }
+    /* --- CORRECTION DESIGN : ESPACEMENT DU TITRE PRINCIPAL --- */
+    
+    .hero-text {
+        text-align: center;
+        margin-bottom: 35px !important; /* Décolle tout le bloc de texte des boutons (Vols, Hôtels...) */
+    }
+
+    .hero-text h2 {
+        margin-bottom: 15px !important; /* Décolle le grand titre "Planifiez..." du petit sous-titre */
+        color: #fff; /* Tu peux mettre #fff (blanc) si ton image de fond est trop sombre */
+        text-shadow: 0px 2px 5px rgba(255,255,255,0.3); /* Légère lueur pour améliorer la lecture */
+    }
+
+    .hero-text p {
+        margin: 0;
+        font-size: 1.1em;
+        color: #555;
+    }
+    .card-footer {
+        display: flex;
+        justify-content: space-between; /* Éloigne le prix (à gauche) du bouton (à droite) */
+        align-items: center; /* Centre verticalement */
+        border-top: 1px solid #eee; /* Petite ligne de séparation propre */
+        padding-top: 15px;
+        margin-top: auto; /* Force le footer à rester collé en bas de la carte */
+    }
+>>>>>>> 67d014e86d2e645da4578480909b97d11a5835ad
 
 .dropdown-content a {
     color: #333;
@@ -442,7 +481,7 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <section class="hero-search">
         <div class="hero-text">
             <h2>Planifiez. Explorez. Vivez.</h2>
-            <p>Le voyage de vos rêves commence ici.</p>
+          
         </div>
         
         <div class="search-container">
