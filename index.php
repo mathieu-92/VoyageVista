@@ -1,182 +1,418 @@
 <?php
-// Démarrage de la session
+// --- PARTIE BACKEND (Logique et requêtes) ---
 session_start();
-
-// Inclusion de la connexion à la base
 require_once 'config.php';
 
-// Requête pour récupérer 6 destinations
-$sql = "SELECT * FROM destination LIMIT 6";
-$stmt = $pdo->query($sql);
-$destinations = $stmt->fetchAll();
-?>
+// Récupération des notifications non lues si l'utilisateur est connecté
+$notif_count = 0;
+if (isset($_SESSION['id_utilisateur'])) {
+    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM notification WHERE id_utilisateur = ? AND lue = 0");
+    $stmt_count->execute([$_SESSION['id_utilisateur']]);
+    $notif_count = $stmt_count->fetchColumn();
+}
 
+// Requête optimisée : on récupère les destinations AVEC un prix de départ dynamique
+// On utilise un LEFT JOIN sur la table 'vol' pour récupérer le prix minimum
+$sql = "
+    SELECT d.*, MIN(v.prix) as prix_depart 
+    FROM destination d
+    LEFT JOIN vol v ON d.id_destination = v.id_destination 
+    GROUP BY d.id_destination
+    LIMIT 6
+";
+$stmt = $pdo->query($sql);
+$destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// --- PARTIE FRONTEND (Affichage HTML) ---
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoyageVista - Planifiez. Explorez. Vivez.</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-   <style>
-    /* LE CORRECTIF ULTIME POUR LA BARRE DE RECHERCHE (Façon Pilule) */
-    .search-container {
-        text-align: center; /* Permet de bien centrer la barre */
-    }
+    <style>
+        /* =========================================
+           STYLE GLOBAL ET RÉINITIALISATION (À adapter selon ton style.css de base)
+        ========================================= */
+        /* --- CSS POUR LE MENU PROFIL DÉROULANT --- */
 
-    .search-bar {
-        display: inline-flex !important; /* La magie est là : ça se rétrécit autour du contenu */
-        align-items: center !important;
-        background-color: white !important;
-        padding: 8px 10px !important;
-        border-radius: 50px !important; /* Bords bien arrondis */
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important; /* Petite ombre portée stylée */
-        margin: 0 auto !important; /* Centre la barre horizontalement */
-    }
+.user-profile-menu {
+    position: relative; /* Indispensable pour positionner le menu en dessous */
+    display: inline-block;
+}
 
-   .search-bar .input-group {
-        display: flex; /* <-- Le changement est ici, plus de !important */
-        align-items: center !important;
-        background-color: transparent !important;
-        padding: 0 15px !important;
-        height: 40px !important;
-        border-right: 1px solid #ddd;
-    }
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Espace entre l'icône, le prénom et la flèche */
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 20px;
+    transition: background 0.3s;
+}
 
-    /* Enlève la ligne de séparation juste avant le bouton vert */
-    .search-bar .input-group:nth-last-child(2) {
-        border-right: none !important;
-    }
+.profile-trigger:hover {
+    background-color: #f8f9fa;
+}
 
-    .search-bar .input-group i {
-        color: #007BFF !important;
-        font-size: 1.2em !important;
-        margin-right: 10px !important;
-        margin-top: 0 !important;
-    }
+.profile-trigger i {
+    font-size: 1.3em;
+    color: #007BFF;
+}
 
-    .search-bar input {
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        font-family: inherit !important;
-        color: #333 !important;
-        font-size: 0.95em !important;
-    }
+.profile-trigger span {
+    font-weight: 500;
+    color: #333;
+}
 
-    .search-bar input[type="date"] {
-        text-transform: uppercase;
-        font-size: 0.85em !important;
-        color: #555 !important;
-        cursor: pointer;
-    }
+.profile-trigger .arrow {
+    font-size: 0.8em;
+    color: #888;
+}
 
-    .btn-search {
-        height: 45px !important;
-        padding: 0 25px !important;
-        border: none !important;
-        background-color: #28a745 !important;
-        color: white !important;
-        font-weight: bold !important;
-        border-radius: 30px !important; /* Bouton arrondi pour coller à la pilule */
-        cursor: pointer !important;
-        transition: background 0.3s;
-        margin-left: 5px;
-    }
-    
-    .btn-search:hover {
-        background-color: #218838 !important;
-    }
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-    .view-all {
-        color: #007BFF;
-        text-decoration: none;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        gap: 8px; /* Espace entre le texte et la flèche */
-        transition: color 0.3s ease;
-    }
-    .view-all:hover {
-        color: #0056b3;
-    }
-    .view-all i {
-        transition: transform 0.3s ease; /* Prépare l'animation */
-    }
-    .view-all:hover i {
-        transform: translateX(6px); /* Fait glisser la flèche vers la droite au survol */
-    }
+/* Le contenu du menu (caché par défaut) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #ffffff;
+    min-width: 180px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 8px 0;
+    z-index: 1000;
+    margin-top: 5px;
+}
 
-    /* 2. Le bas des cartes (Séparation du prix et du bouton) */
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1; /* Permet au contenu de remplir la carte */
-    }
-    .desc {
-        flex-grow: 1; /* Pousse le footer tout en bas */
-        margin-bottom: 15px;
-    }
-    .card-footer {
-        display: flex;
-        justify-content: space-between; /* Éloigne le prix (à gauche) du bouton (à droite) */
-        align-items: center; /* Centre verticalement */
-        border-top: 1px solid #eee; /* Petite ligne de séparation propre */
-        padding-top: 15px;
-        margin-top: auto; /* Force le footer à rester collé en bas de la carte */
-    }
+/* Affichage au survol */
+.user-profile-menu:hover .dropdown-content {
+    display: block;
+}
 
-    /* 3. Le bouton "Découvrir" */
-    .card-footer .btn-primary {
-        background-color: #007BFF !important;
-        border-radius: 20px !important; /* Forme de pilule pour le design moderne */
-        padding: 8px 18px !important;
-        font-size: 0.9em !important;
-        font-weight: bold;
-        text-decoration: none;
-        transition: background-color 0.3s, transform 0.2s;
-    }
-    .card-footer .btn-primary:hover {
-        background-color: #0056b3 !important;
-        transform: scale(1.05); /* Léger effet de zoom au survol */
-    }
-</style>
+.dropdown-content a {
+    color: #333;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-content .logout {
+    color: #dc3545; /* Couleur rouge pour la déconnexion */
+}
+
+.dropdown-content .divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+        }
+
+        /* =========================================
+           MENU PRINCIPAL (NOUVEAU)
+        ========================================= */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .main-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .main-menu a:hover {
+            color: #007BFF;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* =========================================
+           STYLE DE LA BARRE DE RECHERCHE (PILULE)
+        ========================================= */
+        .hero-search {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(to right, #007BFF, #00b4db);
+            color: white;
+        }
+
+        .search-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .search-tabs {
+            margin-bottom: 10px;
+        }
+
+        .search-tabs button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1em;
+            padding: 10px 15px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .search-tabs button.active {
+            opacity: 1;
+            font-weight: bold;
+            border-bottom: 2px solid white;
+        }
+
+        .search-bar {
+            display: inline-flex !important;
+            align-items: center !important;
+            background-color: white !important;
+            padding: 8px 10px !important;
+            border-radius: 50px !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+            margin: 0 auto !important;
+        }
+
+        .search-bar .input-group {
+            display: flex;
+            align-items: center !important;
+            background-color: transparent !important;
+            padding: 0 15px !important;
+            height: 40px !important;
+            border-right: 1px solid #ddd;
+        }
+
+        .search-bar .input-group:nth-last-child(2) {
+            border-right: none !important;
+        }
+
+        .search-bar .input-group i {
+            color: #007BFF !important;
+            font-size: 1.2em !important;
+            margin-right: 10px !important;
+            margin-top: 0 !important;
+        }
+
+        .search-bar input {
+            border: none !important;
+            outline: none !important;
+            background: transparent !important;
+            font-family: inherit !important;
+            color: #333 !important;
+            font-size: 0.95em !important;
+        }
+
+        .search-bar input[type="date"] {
+            text-transform: uppercase;
+            font-size: 0.85em !important;
+            color: #555 !important;
+            cursor: pointer;
+        }
+
+        .btn-search {
+            height: 45px !important;
+            padding: 0 25px !important;
+            border: none !important;
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: bold !important;
+            border-radius: 30px !important;
+            cursor: pointer !important;
+            transition: background 0.3s;
+            margin-left: 5px;
+        }
+
+        .btn-search:hover {
+            background-color: #218838 !important;
+        }
+
+        /* =========================================
+           CARTES DE DESTINATIONS
+        ========================================= */
+        .content-layout {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .view-all {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .view-all:hover {
+            color: #0056b3;
+        }
+
+        .view-all i {
+            transition: transform 0.3s ease;
+        }
+
+        .view-all:hover i {
+            transform: translateX(6px);
+        }
+
+        .grid-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-content h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .country {
+            color: #777;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .desc {
+            flex-grow: 1;
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: auto;
+        }
+
+        .price strong {
+            font-size: 1.2em;
+            color: #28a745;
+        }
+
+        .card-footer .btn-primary {
+            background-color: #007BFF !important;
+            color: white;
+            border-radius: 20px !important;
+            padding: 8px 18px !important;
+            font-size: 0.9em !important;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .card-footer .btn-primary:hover {
+            background-color: #0056b3 !important;
+            transform: scale(1.05);
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            background-color: #007BFF;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        
+        .btn-outline {
+            display: inline-block;
+            text-decoration: none;
+            color: #007BFF;
+            border: 1px solid #007BFF;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <header class="top-nav">
         <div class="logo">
-            <img src="image/logo.png" alt="VoyageVista Logo" style="height: 70px;">
+            <a href="index.php">
+                <img src="image/logo.png" alt="VoyageVista Logo" style="height: 70px;">
+            </a>
         </div>
+
         
         <div class="user-actions">
             <?php if(isset($_SESSION['id_utilisateur'])): ?>
                 <div class="notif-bell">
-    <?php
-    // On compte les notifs non lues pour l'utilisateur connecté
-    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM notification WHERE id_utilisateur = ? AND lue = 0");
-    $stmt_count->execute([$_SESSION['id_utilisateur']]);
-    $notif_count = $stmt_count->fetchColumn();
-    ?>
-    
-    <a href="notifications.php" style="position: relative; color: #333; text-decoration: none;">
-        <i class="fa-regular fa-bell" style="font-size: 1.2em;"></i>
-        
-        <?php if($notif_count > 0): ?>
-            <span style="position: absolute; top: -5px; right: -8px; background: #dc3545; color: white; border-radius: 50%; padding: 1px 5px; font-size: 0.6em; font-weight: bold;">
-                <?= $notif_count ?>
-            </span>
-        <?php endif; ?>
-    </a>
-</div>
+                    <a href="notifications.php" style="position: relative; color: #333; text-decoration: none;">
+                        <i class="fa-regular fa-bell" style="font-size: 1.2em;"></i>
+                        <?php if($notif_count > 0): ?>
+                            <span style="position: absolute; top: -5px; right: -8px; background: #dc3545; color: white; border-radius: 50%; padding: 1px 5px; font-size: 0.6em; font-weight: bold;">
+                                <?= htmlspecialchars($notif_count) ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </div>
                 
-                <div class="user-profile-menu">
+        
+                 <div class="user-profile-menu">
                     <div class="profile-trigger">
                         <i class="fa-solid fa-user-circle"></i>
                         <span><?= htmlspecialchars($_SESSION['prenom']) ?></span>
@@ -189,11 +425,10 @@ $destinations = $stmt->fetchAll();
                         <a href="deconnexion.php" class="logout">Déconnexion</a>
                     </div>
                 </div>
-                
                 <a href="panier.php" class="btn-primary panier-icon">
                     <i class="fa-solid fa-shopping-cart"></i>
                     <?php if(!empty($_SESSION['panier'])): ?>
-                        <span class="cart-badge"><?= count($_SESSION['panier']) ?></span>
+                        <span class="cart-badge" style="background:#dc3545; border-radius:50%; padding:2px 6px; font-size:0.8em;"><?= count($_SESSION['panier']) ?></span>
                     <?php endif; ?>
                 </a>
 
@@ -219,7 +454,6 @@ $destinations = $stmt->fetchAll();
             </div>
             
             <form action="traitement_recherche.php" method="GET" class="search-bar">
-                
                 <input type="hidden" name="type_recherche" id="type_recherche" value="vols">
 
                 <div class="input-group" id="container-origine">
@@ -250,7 +484,7 @@ $destinations = $stmt->fetchAll();
     <main class="content-layout">
 
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Prestataire'): ?>
-            <div style="text-align: center; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #ccc;">
+            <div class="espace-pro-banner" style="text-align: center; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px dashed #ccc;">
                 <p style="margin-bottom: 10px; color: #555;"><strong>Espace Pro :</strong> Vous pouvez ajouter une nouvelle offre directement d'ici.</p>
                 <a href="ajouter_offre.php" class="btn-primary" style="background-color: #28a745; border: none; margin-right: 10px;">
                     <i class="fa-solid fa-plus-circle"></i> Publier une annonce
@@ -268,17 +502,21 @@ $destinations = $stmt->fetchAll();
             </div>
             
             <div class="grid-results">
-                
-                <?php if(count($destinations) > 0): ?>
+                <?php if(!empty($destinations)): ?>
                     <?php foreach($destinations as $dest): ?>
                         <div class="card">
-                          <img src="image/<?= htmlspecialchars($dest['image_illustration']) ?>" alt="<?= htmlspecialchars($dest['ville']) ?>">  
+                          <img src="image/<?= htmlspecialchars($dest['image_illustration'] ?? 'default.jpg') ?>" alt="<?= htmlspecialchars($dest['ville']) ?>">  
                             <div class="card-content">
                                 <h3><?= htmlspecialchars($dest['ville']) ?></h3>
                                 <p class="country"><?= htmlspecialchars($dest['pays']) ?></p>
                                 <p class="desc"><?= htmlspecialchars($dest['description_courte']) ?></p>
                                 <div class="card-footer">
-                                    <span class="price">À partir de <strong>299€</strong>/pers</span>
+                                    <span class="price">
+                                        À partir de 
+                                        <strong>
+                                            <?= !empty($dest['prix_depart']) ? htmlspecialchars($dest['prix_depart']) . '€' : 'N/A' ?>
+                                        </strong>/pers
+                                    </span>
                                     <a href="details_offre.php?id=<?= $dest['id_destination'] ?>" class="btn-primary">Découvrir</a>
                                 </div>
                             </div>
@@ -287,7 +525,6 @@ $destinations = $stmt->fetchAll();
                 <?php else: ?>
                     <p class="no-results">Le catalogue est en cours de mise à jour.</p>
                 <?php endif; ?>
-
             </div>
         </section>
     </main>
