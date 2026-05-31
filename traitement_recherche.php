@@ -7,7 +7,25 @@ $ville_recherchee = isset($_GET['destination']) ? trim($_GET['destination']) : '
 $ville_depart = isset($_GET['origine']) ? trim($_GET['origine']) : ''; 
 $type_recherche = isset($_GET['type_recherche']) ? $_GET['type_recherche'] : 'vols';
 $depart = isset($_GET['depart']) ? $_GET['depart'] : '';
+$retour = isset($_GET['retour']) ? $_GET['retour'] : '';
 $voyageurs = isset($_GET['voyageurs']) ? (int)$_GET['voyageurs'] : 1;
+
+$aujourdhui = date('Y-m-d');
+
+// --- POINT GRILLE : Gestion des dates de trajet (Incohérences refusées) ---
+if (!empty($depart) && $depart < $aujourdhui) {
+    die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+            <h2 style='color:#dc3545;'>Erreur : La date de départ ne peut pas être dans le passé.</h2>
+            <a href='index.php' style='padding:10px 20px; background:#007BFF; color:white; text-decoration:none; border-radius:5px;'>Retour à l'accueil</a>
+         </div>");
+}
+if (!empty($depart) && !empty($retour) && $retour <= $depart) {
+    die("<div style='text-align:center; padding:50px; font-family:sans-serif;'>
+            <h2 style='color:#dc3545;'>Erreur : La date de retour doit être après la date de départ.</h2>
+            <a href='index.php' style='padding:10px 20px; background:#007BFF; color:white; text-decoration:none; border-radius:5px;'>Retour à l'accueil</a>
+         </div>");
+}
+// --------------------------------------------------------------------------
 
 $resultats = [];
 
@@ -47,6 +65,16 @@ try {
                 WHERE d.ville LIKE :ville OR d.pays LIKE :pays";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':ville' => '%' . $ville_recherchee . '%', ':pays' => '%' . $ville_recherchee . '%']);
+        $resultats = $stmt->fetchAll();
+
+   } elseif ($type_recherche === 'vehicules') {
+        // POINT GRILLE : Affichage des disponibilités transport (uniquement disponibilite = 1)
+        $sql = "SELECT * FROM vehicule WHERE disponibilite = 1 AND (marque LIKE :recherche1 OR type_vehicule LIKE :recherche2)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':recherche1' => '%' . $ville_recherchee . '%',
+            ':recherche2' => '%' . $ville_recherchee . '%'
+        ]);
         $resultats = $stmt->fetchAll();
 
     } else {
@@ -102,7 +130,7 @@ try {
             <div class="search-recap">
                 <span class="recap-item"><i class="fa-solid fa-tag"></i> <strong><?= ucfirst(htmlspecialchars($type_recherche)) ?></strong></span>
                 <?php if(!empty($depart)): ?><span class="recap-item"><i class="fa-regular fa-calendar"></i> <?= date('d/m/Y', strtotime($depart)) ?></span><?php endif; ?>
-                <span class="recap-item"><i class="fa-solid fa-user-group"></i> <?= htmlspecialchars($voyageurs) ?> pers.</span>
+                <?php if($type_recherche !== 'vehicules'): ?><span class="recap-item"><i class="fa-solid fa-user-group"></i> <?= htmlspecialchars($voyageurs) ?> pers.</span><?php endif; ?>
             </div>
         </div>
         
@@ -128,36 +156,76 @@ try {
                                     <input type="hidden" name="date_fin" value="<?= date('Y-m-d', strtotime($vol['datearrivee'])) ?>">
                                     <input type="hidden" name="voyageurs" value="<?= htmlspecialchars($voyageurs) ?>">
                                     <input type="hidden" name="prix_estime" value="<?= htmlspecialchars($vol['prix']) ?>">
-                                    <button type="submit" class="btn-primary" style="background-color: #28a745; border: none; padding: 10px 20px;">Sélectionner</button>
+                                    <button type="submit" class="btn-primary" style="background-color: #28a745; border: none; padding: 10px 20px; cursor: pointer;">Sélectionner</button>
                                 </form>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 
+                <?php elseif($type_recherche === 'vehicules'): ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    <?php foreach($resultats as $v): ?>
+                        <div class="result-card">
+                            <div class="card-img" style="background: #333; display:flex; justify-content:center; align-items:center;">
+                                <i class="fa-solid fa-car-side" style="font-size: 5em; color: white;"></i>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="card-title"><?= htmlspecialchars($v['marque']) ?> - <?= htmlspecialchars($v['type_vehicule']) ?></h3>
+                                <p class="card-location"><i class="fa-solid fa-gas-pump"></i> <?= htmlspecialchars($v['motorisation']) ?> | <i class="fa-solid fa-users"></i> <?= $v['nombres_places'] ?> places</p>
+                                
+                                <div class="card-price" style="flex-direction: column; align-items: stretch; border-top: 1px solid #eee; margin-top: auto;">
+                                    <div style="display:flex; justify-content:space-between; margin: 15px 0;">
+                                        <span style="color: #28a745;"><?= htmlspecialchars($v['prix_journalier']) ?> € / jour</span>
+                                    </div>
+                                    
+                                    <form action="panier.php" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="action" value="ajouter">
+                                        <input type="hidden" name="id_destination" value="VEH-<?= $v['id_vehicule'] ?>">
+                                        <input type="hidden" name="nom_ville" value="<?= htmlspecialchars($v['marque'] . ' ' . $v['type_vehicule']) ?>">
+                                        <input type="hidden" name="date_debut" value="<?= htmlspecialchars($depart) ?>">
+                                        <input type="hidden" name="date_fin" value="<?= htmlspecialchars($retour) ?>">
+                                        <input type="hidden" name="voyageurs" value="1">
+                                        <input type="hidden" name="prix_estime" value="<?= htmlspecialchars($v['prix_journalier']) ?>">
+                                        <button type="submit" class="btn-primary" style="width: 100%; text-align: center; border: none; cursor:pointer; background-color:#007BFF; padding:10px; color:white; border-radius:5px;">
+                                            Sélectionner ce véhicule
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
+
                 <?php else: ?>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                    <?php foreach($resultats as $item): ?>
+                    <?php foreach($resultats as $item): 
+                        // On gère les noms de colonnes dynamiques selon si c'est un hôtel ou une activité
+                        $titre = $item['nom'] ?? $item['nom_hebergement'] ?? $item['ville'] ?? 'Sans nom';
+                        $prix = $item['prix'] ?? $item['prix_par_nuit'] ?? null;
+                    ?>
                         <div class="result-card">
                             <div class="card-img">
                                 <img src="image/<?= htmlspecialchars($item['image_illustration'] ?? 'default.jpg') ?>" onerror="this.src='image/default.jpg'">
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title"><?= htmlspecialchars($item['nom'] ?? $item['ville']) ?></h3>
+                                <h3 class="card-title"><?= htmlspecialchars($titre) ?></h3>
                                 <div class="card-location"><i class="fa-solid fa-map-pin"></i> <?= htmlspecialchars($item['ville'] ?? '') ?>, <?= htmlspecialchars($item['pays'] ?? '') ?></div>
                                 <p style="font-size: 0.9em; color: #555;"><?= htmlspecialchars(substr($item['description_courte'] ?? $item['description'] ?? '', 0, 80)) ?>...</p>
+                                
                                 <div class="card-price">
-                                    <span><?= isset($item['prix']) ? $item['prix'] . ' €' : 'Dès 299 €' ?></span>
+                                    <span><?= $prix ? $prix . ' €' : 'Prix sur demande' ?></span>
                                     
                                     <?php
+                                        // On génère le bon lien selon la table
                                         if ($type_recherche === 'hotels') {
-                                            $lien = "details_hebergement.php?id=" . (isset($item['id_hebergement']) ? $item['id_hebergement'] : '');
+                                            $lien = "details_hebergement.php?id=" . ($item['id_hebergement'] ?? '');
                                         } elseif ($type_recherche === 'activites') {
-                                            $lien = "details_activite.php?id=" . (isset($item['id_activite']) ? $item['id_activite'] : '');
+                                            $lien = "details_activite.php?id=" . ($item['id_activite'] ?? '');
                                         } else {
-                                            $lien = "details_offre.php?id=" . (isset($item['id_destination']) ? $item['id_destination'] : '');
+                                            $lien = "details_offre.php?id=" . ($item['id_destination'] ?? '');
                                         }
                                     ?>
-                                    <a href="<?= $lien ?>" class="btn-primary" style="padding: 5px 15px;">Voir plus</a>
+                                    <a href="<?= $lien ?>" class="btn-primary" style="padding: 5px 15px; text-decoration:none;">Voir plus</a>
                                 </div>
                             </div>
                         </div>
@@ -167,9 +235,9 @@ try {
 
             <?php else: ?>
                 <div style="text-align: center; padding: 50px; background: white; border-radius: 10px;">
-                    <i class="fa-solid <?= $type_recherche === 'vols' ? 'fa-plane-slash' : 'fa-magnifying-glass-location' ?>" style="font-size: 4em; color: #ccc; margin-bottom: 20px;"></i>
+                    <i class="fa-solid <?= $type_recherche === 'vols' ? 'fa-plane-slash' : ($type_recherche === 'vehicules' ? 'fa-car-burst' : 'fa-magnifying-glass-location') ?>" style="font-size: 4em; color: #ccc; margin-bottom: 20px;"></i>
                     <h3 style="color: #333;">Oups, aucun résultat trouvé !</h3>
-                    <p style="color: #666;">Essayez une autre ville ou modifiez vos critères.</p>
+                    <p style="color: #666;">Essayez une autre destination ou modifiez vos dates/critères.</p>
                 </div>
             <?php endif; ?>
         </div>

@@ -487,6 +487,7 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <button type="button" onclick="changeTab('hotels', this)"><i class="fa-solid fa-hotel"></i> Hôtels</button>
                 <button type="button" onclick="changeTab('sejours', this)"><i class="fa-solid fa-umbrella-beach"></i> Séjours</button>
                 <button type="button" onclick="changeTab('activites', this)"><i class="fa-solid fa-person-running"></i> Activités</button>
+                <button type="button" onclick="changeTab('vehicules', this)"><i class="fa-solid fa-car"></i> Véhicules</button>
             </div>
             
             <form action="traitement_recherche.php" method="GET" class="search-bar">
@@ -598,6 +599,11 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 destInput.placeholder = "Où cherchez-vous une activité ?";
                 retourContainer.style.display = "none"; 
                 voyageursContainer.style.display = "flex";
+            } else if (type === 'vehicules') { // --- NOUVEAU BLOC VÉHICULES INTÉGRÉ ICI ---
+                origineContainer.style.display = "none";
+                destInput.placeholder = "Où louer un véhicule (Marque/Ville) ?";
+                retourContainer.style.display = "flex";
+                voyageursContainer.style.display = "none";
             }
         }
     </script>

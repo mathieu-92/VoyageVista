@@ -30,8 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
             // On commence une transaction PDO pour être sûr que toutes les insertions fonctionnent ensemble
             $pdo->beginTransaction();
 
-            // A. Enregistrement des réservations
+            // A. Enregistrement des réservations et création de l'itinéraire
             foreach ($_SESSION['panier'] as $item) {
+                
+                // CORRECTION DATE : On s'assure d'avoir des dates valides. 
+                // Si 'fin' est vide, on met la même que le 'debut' pour éviter le crash SQL
+                $date_debut = !empty($item['debut']) ? $item['debut'] : date('Y-m-d');
+                $date_fin = !empty($item['fin']) ? $item['fin'] : $date_debut; 
+                
                 $sql = "INSERT INTO Reservation (
                             date_commande, prix_total_calcule, statut_paiement, notification, 
                             nb_bebe, nb_jeunes, nb_etudiant, nb_adultes, nb_seniors, 
@@ -46,15 +52,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
                 $stmt->execute([
                     ':prix_total' => $item['prix_estime'] * $item['voyageurs'],
                     ':voyageurs' => $item['voyageurs'],
-                    ':date_debut' => $item['debut'],
-                    ':date_fin' => $item['fin'],
+                    ':date_debut' => $date_debut,
+                    ':date_fin' => $date_fin,
                     ':id_utilisateur' => $_SESSION['id_utilisateur']
                 ]);
+
+                // On récupère l'ID de la réservation qui vient d'être créée
+                $id_reservation_creee = $pdo->lastInsertId();
+                
+                // POINT GRILLE : Création d'un itinéraire + Ajout d'éléments
+                $type_element = substr($item['id'], 0, 3); // VOL, HEB, ACT ou VEH
+                
+                $stmt_itineraire = $pdo->prepare("INSERT INTO itineraire (id_reservation, nom_element, type_element, prix_element, date_element) VALUES (?, ?, ?, ?, ?)");
+                $stmt_itineraire->execute([
+                    $id_reservation_creee, 
+                    $item['ville'], 
+                    $type_element, 
+                    $item['prix_estime'] * $item['voyageurs'], 
+                    $date_debut
+                ]);
+                
+                // POINT GRILLE : Mise à jour des disponibilités (Véhicule)
+                if ($type_element === 'VEH') {
+                    $id_vehicule = str_replace('VEH-', '', $item['id']);
+                    $update_vehicule = $pdo->prepare("UPDATE vehicule SET disponibilite = 0 WHERE id_vehicule = ?");
+                    $update_vehicule->execute([$id_vehicule]);
+                }
             }
 
             // B. Création de la notification officielle pour l'utilisateur
             $msg = "Félicitations ! Votre paiement de " . $total . " € a été accepté. Votre séjour est confirmé.";
-            // Remarque : adapte le nom de la table "notification" selon ce qui est dans ta base de données
             $sql_notif = "INSERT INTO notification (id_utilisateur, message, date_creation, lue) VALUES (:id_user, :msg, NOW(), 0)";
             $stmt_notif = $pdo->prepare($sql_notif);
             $stmt_notif->execute([
@@ -67,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
 
             // On vide le panier puisque la commande est passée !
             $_SESSION['panier'] = [];
+            
+            // On sauvegarde l'ID de réservation pour le bouton "Voir mon itinéraire" sur la page de succès
+            $id_derniere_resa = $id_reservation_creee ?? 1;
             $message_succes = "Votre paiement a été accepté ! Votre voyage est réservé. 🎉";
 
         } catch (\PDOException $e) {
@@ -126,14 +156,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
                 <i class="fa-solid fa-circle-check" style="font-size: 5em; color: #28a745; margin-bottom: 20px;"></i>
                 <h2 style="color: #28a745;"><?= $message_succes ?></h2>
                 <p style="color: #666; font-size: 1.1em; margin-bottom: 30px;">Un reçu vous a été envoyé et une alerte a été ajoutée à vos notifications.</p>
-                <a href="index.php" class="btn-primary" style="text-decoration: none; padding: 12px 25px;">Retourner à l'accueil</a>
+                
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <a href="index.php" class="btn-outline" style="text-decoration: none; padding: 12px 25px;">Retour à l'accueil</a>
+                    <a href="visualiser_itineraire.php?id_reservation=<?= $id_derniere_resa ?>" class="btn-primary" style="text-decoration: none; padding: 12px 25px; background-color: #28a745; border: none;">Voir mon itinéraire complet</a>
+                </div>
             </div>
 
         <?php elseif (!isset($_SESSION['id_utilisateur'])): ?>
             <div style="text-align: center;">
                 <i class="fa-solid fa-lock" style="font-size: 4em; color: #ffc107; margin-bottom: 20px;"></i>
                 <h2 style="color: #333;">Connexion obligatoire</h2>
-                <p style="color: #666; margin-bottom: 30px;">Pour finaliser votre réservation et procéder au paiement de <strong><?= $total ?> €</strong>, vous devez posséder un compte VoyageVista.</p>
+                <p style="color: #666; margin-bottom: 30px;">Pour finaliser votre réservation et procéder au paiement de <strong><?= number_format($total, 2) ?> €</strong>, vous devez posséder un compte VoyageVista.</p>
                 <div style="display: flex; justify-content: center; gap: 15px;">
                     <a href="connexion.php" class="btn-primary" style="text-decoration: none;">Se connecter</a>
                     <a href="inscription.php" class="btn-outline" style="text-decoration: none;">Créer un compte</a>
@@ -145,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['carte_nom'])) {
                 <h2 style="color: #333; margin-bottom: 10px;"><i class="fa-solid fa-shield-halved" style="color: #28a745;"></i> Paiement Sécurisé</h2>
                 <div style="background: #f8f9fa; border: 2px dashed #007BFF; padding: 15px; border-radius: 8px; display: inline-block;">
                     <span style="font-size: 1.2em; color: #555;">Montant à régler :</span>
-                    <strong style="font-size: 1.5em; color: #333; margin-left: 10px;"><?= $total ?> €</strong>
+                    <strong style="font-size: 1.5em; color: #333; margin-left: 10px;"><?= number_format($total, 2) ?> €</strong>
                 </div>
             </div>
 
