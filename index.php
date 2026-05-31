@@ -19,9 +19,79 @@ $destinations = $stmt->fetchAll();
     <title>VoyageVista - Planifiez. Explorez. Vivez.</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+   <style>
+    /* LE CORRECTIF ULTIME POUR LA BARRE DE RECHERCHE (Façon Pilule) */
+    .search-container {
+        text-align: center; /* Permet de bien centrer la barre */
+    }
+
+    .search-bar {
+        display: inline-flex !important; /* La magie est là : ça se rétrécit autour du contenu */
+        align-items: center !important;
+        background-color: white !important;
+        padding: 8px 10px !important;
+        border-radius: 50px !important; /* Bords bien arrondis */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important; /* Petite ombre portée stylée */
+        margin: 0 auto !important; /* Centre la barre horizontalement */
+    }
+
+    .search-bar .input-group {
+        display: flex !important;
+        align-items: center !important;
+        background-color: transparent !important; /* Fond transparent pour les cases */
+        padding: 0 15px !important;
+        height: 40px !important;
+        border-right: 1px solid #ddd; /* Petite ligne grise de séparation entre les cases */
+    }
+
+    /* Enlève la ligne de séparation juste avant le bouton vert */
+    .search-bar .input-group:nth-last-child(2) {
+        border-right: none !important;
+    }
+
+    .search-bar .input-group i {
+        color: #007BFF !important;
+        font-size: 1.2em !important;
+        margin-right: 10px !important;
+        margin-top: 0 !important;
+    }
+
+    .search-bar input {
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        font-family: inherit !important;
+        color: #333 !important;
+        font-size: 0.95em !important;
+    }
+
+    .search-bar input[type="date"] {
+        text-transform: uppercase;
+        font-size: 0.85em !important;
+        color: #555 !important;
+        cursor: pointer;
+    }
+
+    .btn-search {
+        height: 45px !important;
+        padding: 0 25px !important;
+        border: none !important;
+        background-color: #28a745 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 30px !important; /* Bouton arrondi pour coller à la pilule */
+        cursor: pointer !important;
+        transition: background 0.3s;
+        margin-left: 5px;
+    }
+    
+    .btn-search:hover {
+        background-color: #218838 !important;
+    }
+</style>
 </head>
 <body>
-<a href="deconnexion.php"></a>
     <header class="top-nav">
         <div class="logo">
             <img src="image/logo.png" alt="VoyageVista Logo" style="height: 70px;">
@@ -30,8 +100,10 @@ $destinations = $stmt->fetchAll();
         <div class="user-actions">
             <?php if(isset($_SESSION['id_utilisateur'])): ?>
                 <div class="notif-bell">
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="badge"></span>
+                    <a href="notifications.php" style="color: inherit; text-decoration: none;">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge"></span>
+                    </a>
                 </div>
                 
                 <div class="user-profile-menu">
@@ -42,7 +114,7 @@ $destinations = $stmt->fetchAll();
                     </div>
                     <div class="dropdown-content">
                         <a href="profil.php">Mon Profil</a>
-                        <a href="mes_reservations.php">Mes Réservations</a>
+                        <a href="gestion_reservations.php">Mes Réservations</a>
                         <div class="divider"></div>
                         <a href="deconnexion.php" class="logout">Déconnexion</a>
                     </div>
@@ -61,20 +133,7 @@ $destinations = $stmt->fetchAll();
             <?php endif; ?>
         </div>
     </header>
-<style>
-    /* Correction de l'alignement pour la barre de recherche de l'accueil */
-    .search-bar .input-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px; /* Laisse un petit espace propre entre l'icône et le champ */
-    }
 
-    .search-bar .input-group i {
-        font-size: 1.2em;
-        color: #555;
-        margin: 0; /* Supprime les marges parasites qui décalent l'icône vers le haut */
-    }
-</style>
     <section class="hero-search">
         <div class="hero-text">
             <h2>Planifiez. Explorez. Vivez.</h2>
@@ -97,16 +156,14 @@ $destinations = $stmt->fetchAll();
                     <input type="text" name="destination" id="input-dest" placeholder="Où voulez-vous aller ?" required>
                 </div>
                 <div class="input-group">
-                    <i class="fa-solid fa-calendar-alt"></i>
                     <input type="date" name="depart" required>
                 </div>
                 <div class="input-group" id="container-retour">
-                    <i class="fa-solid fa-calendar-alt"></i>
                     <input type="date" name="retour">
                 </div>
                 <div class="input-group" id="container-voyageurs" style="display: none; max-width: 100px;">
                     <i class="fa-solid fa-user-group"></i>
-                    <input type="number" name="voyageurs" placeholder="Pers." min="1" value="2" style="padding-left: 5px;">
+                    <input type="number" name="voyageurs" placeholder="Pers." min="1" value="2" style="width: 50px !important;">
                 </div>
 
                 <button type="submit" class="btn-search">Rechercher</button>
@@ -127,6 +184,7 @@ $destinations = $stmt->fetchAll();
                 </a>
             </div>
         <?php endif; ?>
+
         <section class="results-section">
             <div class="section-header">
                 <h2>Explorez nos destinations populaires</h2>
