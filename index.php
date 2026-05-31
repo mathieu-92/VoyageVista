@@ -100,11 +100,23 @@ $destinations = $stmt->fetchAll();
         <div class="user-actions">
             <?php if(isset($_SESSION['id_utilisateur'])): ?>
                 <div class="notif-bell">
-                    <a href="notifications.php" style="color: inherit; text-decoration: none;">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="badge"></span>
-                    </a>
-                </div>
+    <?php
+    // On compte les notifs non lues pour l'utilisateur connecté
+    $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM notification WHERE id_utilisateur = ? AND lue = 0");
+    $stmt_count->execute([$_SESSION['id_utilisateur']]);
+    $notif_count = $stmt_count->fetchColumn();
+    ?>
+    
+    <a href="notifications.php" style="position: relative; color: #333; text-decoration: none;">
+        <i class="fa-regular fa-bell" style="font-size: 1.2em;"></i>
+        
+        <?php if($notif_count > 0): ?>
+            <span style="position: absolute; top: -5px; right: -8px; background: #dc3545; color: white; border-radius: 50%; padding: 1px 5px; font-size: 0.6em; font-weight: bold;">
+                <?= $notif_count ?>
+            </span>
+        <?php endif; ?>
+    </a>
+</div>
                 
                 <div class="user-profile-menu">
                     <div class="profile-trigger">
