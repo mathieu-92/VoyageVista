@@ -7,5 +7,5 @@ Projet Web dynamique 2026
 ## 👥 L'équipe de développement
 * Mathieu Salducci (ING2) 
 * Ruben Brabant
-* Adrien du Lac des fougeres 
+* Adrien du Lac des Fugères 
 
