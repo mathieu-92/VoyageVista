@@ -13,7 +13,7 @@ $nom = $_POST['nom'];
 $prenom = $_POST['prenom'];
 $mail = $_POST['mail'];
 $date_nais = $_POST['datedenaissance'];
-$nouveau_mdp = $_POST['mdp'];
+$nouveau_mdp = $_POST['mdp'];   
 
 try {
     // Si l'utilisateur a tapé un nouveau mot de passe
