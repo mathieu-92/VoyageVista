@@ -13,7 +13,7 @@
             <img src="image/logo.png" alt="VoyageVista" style="height: 60px;">
             <h2>Créer un compte</h2>
             <p>Rejoignez l'aventure VoyageVista</p>
-        </div>
+        </div> 
 
         <form action="traitement_inscription.php" method="POST" class="auth-form">
             <div class="input-row">
