@@ -8,7 +8,7 @@ $id = $_GET['id'] ?? null;
 if (!$id) {
     header('Location: index.php');
     exit();
-}
+}  
 
 // On récupère les infos de la destination précise
 try {
