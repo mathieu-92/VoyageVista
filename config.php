@@ -8,10 +8,10 @@ $charset = 'utf8mb4';
 
 // Configuration des options de PDO
 $options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Active la gestion des erreurs et des exceptions
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Récupère les données sous forme de tableaux associatifs
-    PDO::ATTR_EMULATE_PREPARES   => false,                  // Désactive l'émulation pour utiliser les vraies requêtes préparées
-];
+    PDO ::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Active la gestion des erreurs et des exceptions
+    PDO ::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Récupère les données sous forme de tableaux associatifs
+    PDO ::ATTR_EMULATE_PREPARES   => false,                  // Désactive l'émulation pour utiliser les vraies requêtes préparées
+]; 
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 
