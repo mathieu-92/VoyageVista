@@ -32,7 +32,7 @@ $prix_total = $total_stmt->fetchColumn() ?: 0;
                     <th style="padding: 10px;">Description</th>
                     <th style="padding: 10px;">Prix</th>
                 </tr>
-            </thead>
+            </thead> 
             <tbody>
                 <?php foreach ($elements as $el): 
                     // Icônes dynamiques basées sur le type
