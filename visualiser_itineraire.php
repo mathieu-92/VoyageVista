@@ -109,7 +109,7 @@ foreach ($itineraire as $item) {
                     <th>Description</th>
                     <th style="text-align: right;">Prix</th>
                 </tr>
-            </thead>
+            </thead> 
             <tbody>
                 <?php foreach ($itineraire as $item): ?>
                     <tr>

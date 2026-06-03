@@ -24,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: dashboard_prestataire.php');
         } else {
             header('Location: index.php'); // Client normal
-        }
+        } 
         exit();
     }else {
         die("Email ou mot de passe incorrect.");
-    }
+    }  
 }

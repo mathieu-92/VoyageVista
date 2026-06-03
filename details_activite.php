@@ -6,7 +6,7 @@ require_once 'config.php';
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header('Location: index.php');
     exit();
-}
+}  
 
 $id_activite = (int)$_GET['id'];
 

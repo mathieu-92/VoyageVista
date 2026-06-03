@@ -20,7 +20,7 @@ if (isset($_GET['annuler'])) {
     $stmt->execute([$id_resa, $id_user]);
     header('Location: gestion_reservations.php?msg=annule');
     exit();
-}
+}   
 
 // Récupération
 $stmt = $pdo->prepare("SELECT * FROM Reservation WHERE id_utilisateur = ? ORDER BY date_commande DESC");
