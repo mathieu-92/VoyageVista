@@ -1,3 +1,4 @@
+
 <?php
 // --- PARTIE BACKEND (Logique et requêtes) ---
 session_start();
@@ -35,394 +36,71 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     <style>
         /* =========================================
-           STYLE GLOBAL ET RÉINITIALISATION (À adapter selon ton style.css de base)
+           STYLE GLOBAL ET RÉINITIALISATION
         ========================================= */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; }
+
         /* --- CSS POUR LE MENU PROFIL DÉROULANT --- */
-
-.user-profile-menu {
-    position: relative; /* Indispensable pour positionner le menu en dessous */
-    display: inline-block;
-}
-
-.profile-trigger {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Espace entre l'icône, le prénom et la flèche */
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 20px;
-    transition: background 0.3s;
-}
-
-.profile-trigger:hover {
-    background-color: #f8f9fa;
-}
-
-.profile-trigger i {
-    font-size: 1.3em;
-    color: #007BFF;
-}
-
-.profile-trigger span {
-    font-weight: 500;
-    color: #333;
-}
-
-.profile-trigger .arrow {
-    font-size: 0.8em;
-    color: #888;
-}
-
-/* Le contenu du menu (caché par défaut) */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: #ffffff;
-    min-width: 180px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-    border-radius: 8px;
-    padding: 8px 0;
-    z-index: 1000;
-    margin-top: 5px;
-}
-
-/* Affichage au survol */
-.user-profile-menu:hover .dropdown-content {
-    display: block;
-}
-    /* 2. Le bas des cartes (Séparation du prix et du bouton) */
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1; /* Permet au contenu de remplir la carte */
-    }
-    .desc {
-        flex-grow: 1; /* Pousse le footer tout en bas */
-        margin-bottom: 15px;
-    }
-    /* --- CORRECTION DESIGN : ESPACEMENT DU TITRE PRINCIPAL --- */
-    
-    .hero-text {
-        text-align: center;
-        margin-bottom: 35px !important; /* Décolle tout le bloc de texte des boutons (Vols, Hôtels...) */
-    }
-
-    .hero-text h2 {
-        margin-bottom: 15px !important; /* Décolle le grand titre "Planifiez..." du petit sous-titre */
-        color: #fff; /* Tu peux mettre #fff (blanc) si ton image de fond est trop sombre */
-        text-shadow: 0px 2px 5px rgba(255,255,255,0.3); /* Légère lueur pour améliorer la lecture */
-    }
-
-    .hero-text p {
-        margin: 0;
-        font-size: 1.1em;
-        color: #555;
-    }
-    .card-footer {
-        display: flex;
-        justify-content: space-between; /* Éloigne le prix (à gauche) du bouton (à droite) */
-        align-items: center; /* Centre verticalement */
-        border-top: 1px solid #eee; /* Petite ligne de séparation propre */
-        padding-top: 15px;
-        margin-top: auto; /* Force le footer à rester collé en bas de la carte */
-    }
-
-.dropdown-content a {
-    color: #333;
-    padding: 10px 16px;
-    text-decoration: none;
-    display: block;
-    font-size: 0.95em;
-    transition: background 0.2s;
-}
-
-.dropdown-content a:hover {
-    background-color: #f1f1f1;
-}
-
-.dropdown-content .logout {
-    color: #dc3545; /* Couleur rouge pour la déconnexion */
-}
-
-.dropdown-content .divider {
-    height: 1px;
-    background-color: #eee;
-    margin: 5px 0;
-}
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7f6;
-        }
-
-        /* =========================================
-           MENU PRINCIPAL (NOUVEAU)
-        ========================================= */
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 30px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .main-menu {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .main-menu a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .main-menu a:hover {
-            color: #007BFF;
-        }
-
-        .user-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        /* =========================================
-           STYLE DE LA BARRE DE RECHERCHE (PILULE)
-        ========================================= */
-        .hero-search {
-            text-align: center;
-            padding: 50px 20px;
-            background: linear-gradient(to right, #007BFF, #00b4db);
-            color: white;
-        }
-
-        .search-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .search-tabs {
-            margin-bottom: 10px;
-        }
-
-        .search-tabs button {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1em;
-            padding: 10px 15px;
-            cursor: pointer;
-            opacity: 0.7;
-        }
-
-        .search-tabs button.active {
-            opacity: 1;
-            font-weight: bold;
-            border-bottom: 2px solid white;
-        }
-
-        .search-bar {
-            display: inline-flex !important;
-            align-items: center !important;
-            background-color: white !important;
-            padding: 8px 10px !important;
-            border-radius: 50px !important;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
-            margin: 0 auto !important;
-        }
-
-        .search-bar .input-group {
-            display: flex;
-            align-items: center !important;
-            background-color: transparent !important;
-            padding: 0 15px !important;
-            height: 40px !important;
-            border-right: 1px solid #ddd;
-        }
-
-        .search-bar .input-group:nth-last-child(2) {
-            border-right: none !important;
-        }
-
-        .search-bar .input-group i {
-            color: #007BFF !important;
-            font-size: 1.2em !important;
-            margin-right: 10px !important;
-            margin-top: 0 !important;
-        }
-
-        .search-bar input {
-            border: none !important;
-            outline: none !important;
-            background: transparent !important;
-            font-family: inherit !important;
-            color: #333 !important;
-            font-size: 0.95em !important;
-        }
-
-        .search-bar input[type="date"] {
-            text-transform: uppercase;
-            font-size: 0.85em !important;
-            color: #555 !important;
-            cursor: pointer;
-        }
-
-        .btn-search {
-            height: 45px !important;
-            padding: 0 25px !important;
-            border: none !important;
-            background-color: #28a745 !important;
-            color: white !important;
-            font-weight: bold !important;
-            border-radius: 30px !important;
-            cursor: pointer !important;
-            transition: background 0.3s;
-            margin-left: 5px;
-        }
-
-        .btn-search:hover {
-            background-color: #218838 !important;
-        }
-
-        /* =========================================
-           CARTES DE DESTINATIONS
-        ========================================= */
-        .content-layout {
-            padding: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .view-all {
-            color: #007BFF;
-            text-decoration: none;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: color 0.3s ease;
-        }
-
-        .view-all:hover {
-            color: #0056b3;
-        }
-
-        .view-all i {
-            transition: transform 0.3s ease;
-        }
-
-        .view-all:hover i {
-            transform: translateX(6px);
-        }
-
-        .grid-results {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-
-        .card-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .card-content h3 {
-            margin: 0 0 5px 0;
-            color: #333;
-        }
-
-        .country {
-            color: #777;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-        }
-
-        .desc {
-            flex-grow: 1;
-            margin-bottom: 15px;
-            color: #555;
-            font-size: 0.95em;
-            line-height: 1.4;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-            margin-top: auto;
-        }
-
-        .price strong {
-            font-size: 1.2em;
-            color: #28a745;
-        }
-
-        .card-footer .btn-primary {
-            background-color: #007BFF !important;
-            color: white;
-            border-radius: 20px !important;
-            padding: 8px 18px !important;
-            font-size: 0.9em !important;
-            font-weight: bold;
-            text-decoration: none;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .card-footer .btn-primary:hover {
-            background-color: #0056b3 !important;
-            transform: scale(1.05);
-        }
+        .user-profile-menu { position: relative; display: inline-block; }
+        .profile-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 12px; border-radius: 20px; transition: background 0.3s; }
+        .profile-trigger:hover { background-color: #f8f9fa; }
+        .profile-trigger i { font-size: 1.3em; color: #007BFF; }
+        .profile-trigger span { font-weight: 500; color: #333; }
+        .profile-trigger .arrow { font-size: 0.8em; color: #888; }
         
-        .btn-primary {
-            display: inline-block;
-            text-decoration: none;
-            color: white;
-            background-color: #007BFF;
-            padding: 10px 20px;
-            border-radius: 5px;
-        }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 100%; background-color: #ffffff; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 0; z-index: 1000; margin-top: 5px; }
+        .user-profile-menu:hover .dropdown-content { display: block; }
+        .dropdown-content a { color: #333; padding: 10px 16px; text-decoration: none; display: block; font-size: 0.95em; transition: background 0.2s; }
+        .dropdown-content a:hover { background-color: #f1f1f1; }
+        .dropdown-content .logout { color: #dc3545; }
+        .dropdown-content .divider { height: 1px; background-color: #eee; margin: 5px 0; }
+
+        /* --- MENU PRINCIPAL --- */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 30px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .user-actions { display: flex; align-items: center; gap: 15px; }
+
+        /* --- RECHERCHE --- */
+        .hero-search { text-align: center; padding: 50px 20px; background: linear-gradient(to right, #007BFF, #00b4db); color: white; }
+        .hero-text { text-align: center; margin-bottom: 35px !important; }
+        .hero-text h2 { margin-bottom: 15px !important; color: #fff; text-shadow: 0px 2px 5px rgba(255,255,255,0.3); }
+        .search-container { text-align: center; margin-top: 20px; }
+        .search-tabs { margin-bottom: 10px; }
+        .search-tabs button { background: transparent; border: none; color: white; font-size: 1em; padding: 10px 15px; cursor: pointer; opacity: 0.7; }
+        .search-tabs button.active { opacity: 1; font-weight: bold; border-bottom: 2px solid white; }
+
+        .search-bar { display: inline-flex !important; align-items: center !important; background-color: white !important; padding: 8px 10px !important; border-radius: 50px !important; box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important; margin: 0 auto !important; }
+        .search-bar .input-group { display: flex; align-items: center !important; background-color: transparent !important; padding: 0 15px !important; height: 40px !important; border-right: 1px solid #ddd; }
+        .search-bar .input-group:nth-last-child(2) { border-right: none !important; }
+        .search-bar .input-group i { color: #007BFF !important; font-size: 1.2em !important; margin-right: 10px !important; }
+        .search-bar input { border: none !important; outline: none !important; background: transparent !important; font-family: inherit !important; color: #333 !important; font-size: 0.95em !important; }
+        .search-bar input[type="date"] { text-transform: uppercase; font-size: 0.85em !important; color: #555 !important; cursor: pointer; }
         
-        .btn-outline {
-            display: inline-block;
-            text-decoration: none;
-            color: #007BFF;
-            border: 1px solid #007BFF;
-            padding: 10px 20px;
-            border-radius: 5px;
-        }
+        .btn-search { height: 45px !important; padding: 0 25px !important; border: none !important; background-color: #28a745 !important; color: white !important; font-weight: bold !important; border-radius: 30px !important; cursor: pointer !important; transition: background 0.3s; margin-left: 5px; }
+        .btn-search:hover { background-color: #218838 !important; }
+
+        /* --- CARTES DE DESTINATIONS --- */
+        .content-layout { padding: 40px; max-width: 1200px; margin: 0 auto; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .view-all { color: #007BFF; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: color 0.3s ease; }
+        .view-all:hover { color: #0056b3; }
+        .view-all:hover i { transform: translateX(6px); }
+
+        .grid-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-content h3 { margin: 0 0 5px 0; color: #333; }
+        .country { color: #777; font-size: 0.9em; margin-bottom: 10px; }
+        .desc { flex-grow: 1; margin-bottom: 15px; color: #555; font-size: 0.95em; line-height: 1.4; }
+        
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; margin-top: auto; }
+        .price strong { font-size: 1.2em; color: #28a745; }
+        
+        .btn-primary { display: inline-block; text-decoration: none; color: white; background-color: #007BFF; padding: 10px 20px; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-outline { display: inline-block; text-decoration: none; color: #007BFF; border: 1px solid #007BFF; padding: 10px 20px; border-radius: 5px; }
+        
+        .card-footer .btn-primary { border-radius: 20px !important; padding: 8px 18px !important; font-size: 0.9em !important; }
     </style>
 </head>
 <body>
@@ -432,10 +110,10 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <img src="image/logo.png" alt="VoyageVista Logo" style="height: 70px;">
             </a>
         </div>
-
         
         <div class="user-actions">
             <?php if(isset($_SESSION['id_utilisateur'])): ?>
+                
                 <div class="notif-bell">
                     <a href="notifications.php" style="position: relative; color: #333; text-decoration: none;">
                         <i class="fa-regular fa-bell" style="font-size: 1.2em;"></i>
@@ -447,7 +125,6 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </a>
                 </div>
                 
-        
                  <div class="user-profile-menu">
                     <div class="profile-trigger">
                         <i class="fa-solid fa-user-circle"></i>
@@ -455,12 +132,24 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <i class="fa-solid fa-chevron-down arrow"></i>
                     </div>
                     <div class="dropdown-content">
+                        
+                        <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
+                            <a href="dashboard_admin.php" style="color: #dc3545; font-weight: bold;">
+                                <i class="fa-solid fa-hammer"></i> Dashboard Admin
+                            </a>
+                        <?php elseif(isset($_SESSION['role']) && $_SESSION['role'] === 'Prestataire'): ?>
+                            <a href="dashboard_prestataire.php" style="color: #28a745; font-weight: bold;">
+                                <i class="fa-solid fa-toolbox"></i> Espace Pro
+                            </a>
+                        <?php endif; ?>
+                        
                         <a href="profil.php">Mon Profil</a>
                         <a href="gestion_reservations.php">Mes Réservations</a>
                         <div class="divider"></div>
                         <a href="deconnexion.php" class="logout">Déconnexion</a>
                     </div>
                 </div>
+                
                 <a href="panier.php" class="btn-primary panier-icon">
                     <i class="fa-solid fa-shopping-cart"></i>
                     <?php if(!empty($_SESSION['panier'])): ?>
@@ -478,7 +167,6 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <section class="hero-search">
         <div class="hero-text">
             <h2>Planifiez. Explorez. Vivez.</h2>
-          
         </div>
         
         <div class="search-container">
@@ -511,6 +199,11 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="input-group" id="container-voyageurs" style="display: none; max-width: 100px;">
                     <i class="fa-solid fa-user-group"></i>
                     <input type="number" name="voyageurs" placeholder="Pers." min="1" value="2" style="width: 50px !important;">
+                </div>
+
+                <div class="input-group" id="container-budget" style="max-width: 120px;">
+                    <i class="fa-solid fa-wallet"></i>
+                    <input type="number" name="budget_max" placeholder="Max €" min="1" style="width: 70px !important;">
                 </div>
 
                 <button type="submit" class="btn-search">Rechercher</button>
@@ -599,7 +292,7 @@ $destinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 destInput.placeholder = "Où cherchez-vous une activité ?";
                 retourContainer.style.display = "none"; 
                 voyageursContainer.style.display = "flex";
-            } else if (type === 'vehicules') { // --- NOUVEAU BLOC VÉHICULES INTÉGRÉ ICI ---
+            } else if (type === 'vehicules') {
                 origineContainer.style.display = "none";
                 destInput.placeholder = "Où louer un véhicule (Marque/Ville) ?";
                 retourContainer.style.display = "flex";

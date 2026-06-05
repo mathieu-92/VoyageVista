@@ -1,58 +1,66 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 session_start();
 require_once 'config.php';
 
-// 1. SÉCURITÉ : On vérifie que c'est bien un Prestataire qui essaie d'ajouter une offre
+// Sécurité : On vérifie que c'est bien un Prestataire
 if (!isset($_SESSION['id_utilisateur']) || $_SESSION['role'] !== 'Prestataire') {
     header('Location: index.php');
     exit();
 }
 
-// 2. RÉCUPÉRATION DES DONNÉES DU FORMULAIRE
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // On nettoie les espaces inutiles avec trim()
+    
+    // 1. Récupération de toutes les données texte
     $ville = trim($_POST['ville']);
     $pays = trim($_POST['pays']);
-    $description = trim($_POST['description_courte']);
-    $image = trim($_POST['image_illustration']);
+    $description_courte = trim($_POST['description_courte']);
+    $codepostal = isset($_POST['codepostal']) ? (int)$_POST['codepostal'] : 0;
+    $code_aeroport = isset($_POST['code_aeroport']) ? trim($_POST['code_aeroport']) : '';
     
-    // Si le prestataire n'a pas mis d'image, on force l'image par défaut
-    if (empty($image)) {
-        $image = 'default.jpg'; 
-    }
+    $nom_image_bdd = 'default.jpg'; 
 
-    // 3. VÉRIFICATION ET INSERTION
-    if (!empty($ville) && !empty($pays)) {
-        try {
-            $sql = "INSERT INTO destination (ville, pays, description_courte, image_illustration) 
-                    VALUES (:ville, :pays, :desc, :img)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':ville' => $ville,
-                ':pays' => $pays,
-                ':desc' => $description,
-                ':img' => $image
-            ]);
-            
-            // Si ça marche, on le renvoie sur le dashboard avec un message de succès
-            header('Location: dashboard_prestataire.php?msg=ajout_succes');
-            exit();
-
-        } catch (\PDOException $e) {
-            // S'il y a un bug SQL, on le renvoie sur le formulaire avec une erreur
-            header('Location: ajouter_offre.php?erreur=sql');
-            exit();
+    // 2. GESTION DE L'UPLOAD DE L'IMAGE
+    if (isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === UPLOAD_ERR_OK) {
+        
+        $tmp_name = $_FILES['image_upload']['tmp_name'];
+        $name = basename($_FILES['image_upload']['name']);
+        
+        // On remplace juste les espaces et caractères bizarres pour éviter les bugs, 
+        // mais on garde le nom intact (ex: Rome.jpg reste Rome.jpg)
+        $nom_final = preg_replace("/[^a-zA-Z0-9.-]/", "_", $name);
+        
+        $dossier_cible = 'image/';
+        $chemin_final = $dossier_cible . $nom_final;
+        
+        if (move_uploaded_file($tmp_name, $chemin_final)) {
+            $nom_image_bdd = $nom_final; 
         }
-    } else {
-        // Si les champs obligatoires sont vides
-        header('Location: ajouter_offre.php?erreur=vide');
-        exit();
     }
+
+    // 3. ENREGISTREMENT DANS LA BASE DE DONNÉES
+    try {
+        // On insère dynamiquement les variables $codepostal et $code_aeroport
+        $sql = "INSERT INTO destination (ville, pays, description_courte, image_illustration, codepostal, code_aeroport) 
+                VALUES (:ville, :pays, :desc, :img, :cp, :aeroport)";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':ville' => $ville,
+            ':pays' => $pays,
+            ':desc' => $description_courte,
+            ':img' => $nom_image_bdd,
+            ':cp' => $codepostal,
+            ':aeroport' => $code_aeroport
+        ]);
+        
+        header('Location: index.php');
+        exit();
+
+    } catch (\PDOException $e) {
+        die("Erreur PDO lors de l'ajout de l'offre : " . $e->getMessage());
+    }
+    
 } else {
-    // Si quelqu'un accède à la page sans valider le formulaire
     header('Location: ajouter_offre.php');
     exit();
 }

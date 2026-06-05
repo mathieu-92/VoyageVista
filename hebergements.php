@@ -10,7 +10,7 @@ try {
             ORDER BY d.ville ASC";
             
     $stmt = $pdo->query($sql);
-    $hebergements = $stmt->fetchAll();
+    $hebergements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (\PDOException $e) {
     die("Erreur lors de la récupération des hébergements : " . $e->getMessage());
 }
@@ -33,6 +33,16 @@ if (isset($_SESSION['id_utilisateur'])) {
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* CSS POUR LE MENU DÉROULANT */
+        .user-profile-menu { position: relative; display: inline-block; margin-right: 20px;}
+        .profile-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #333; padding: 5px 10px; border-radius: 20px; transition: 0.3s; }
+        .profile-trigger:hover { background-color: #f1f1f1; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 100%; background-color: white; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); border-radius: 8px; padding: 10px 0; z-index: 1000; }
+        .user-profile-menu:hover .dropdown-content { display: block; }
+        .dropdown-content a { color: #333; padding: 10px 20px; text-decoration: none; display: block; font-size: 0.95em; }
+        .dropdown-content a:hover { background-color: #f8f9fa; }
+
+        /* CSS DES CARTES HÔTELS */
         .hotel-card {
             background: white;
             border-radius: 12px;
@@ -121,15 +131,16 @@ if (isset($_SESSION['id_utilisateur'])) {
         }
     </style>
 </head>
-<body style="background-color: #f4f7f6;">
+<body style="background-color: #f4f7f6; margin: 0; padding: 0;">
 
-    <header class="top-nav" style="background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <header class="top-nav" style="background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 10px 30px;">
         <div class="logo">
             <a href="index.php"><img src="image/logo.png" alt="VoyageVista Logo" style="height: 50px;"></a>
         </div>
         
-        <div class="user-actions">
+        <div class="user-actions" style="display: flex; align-items: center;">
             <?php if(isset($_SESSION['id_utilisateur'])): ?>
+                
                 <div class="notif-bell" style="margin-right: 20px;">
                     <a href="notifications.php" style="position: relative; color: #333; text-decoration: none;">
                         <i class="fa-regular fa-bell" style="font-size: 1.2em;"></i>
@@ -141,16 +152,30 @@ if (isset($_SESSION['id_utilisateur'])) {
                     </a>
                 </div>
                 
+                <!-- MENU DÉROULANT DYNAMIQUE -->
                 <div class="user-profile-menu">
-                    <div class="profile-trigger" style="color: #333;">
-                        <i class="fa-solid fa-user-circle"></i>
-                        <span><?= htmlspecialchars($_SESSION['prenom']) ?></span>
+                    <div class="profile-trigger">
+                        <i class="fa-solid fa-user-circle" style="font-size: 1.2em; color: #007BFF;"></i>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($_SESSION['prenom']) ?></span>
+                        <i class="fa-solid fa-chevron-down arrow" style="font-size: 0.8em; color: #888;"></i>
+                    </div>
+                    <div class="dropdown-content">
+                        <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
+                            <a href="dashboard_admin.php" style="color: #dc3545; font-weight: bold;"><i class="fa-solid fa-hammer"></i> Dashboard Admin</a>
+                        <?php elseif(isset($_SESSION['role']) && $_SESSION['role'] === 'Prestataire'): ?>
+                            <a href="dashboard_prestataire.php" style="color: #28a745; font-weight: bold;"><i class="fa-solid fa-toolbox"></i> Espace Pro</a>
+                        <?php endif; ?>
+                        <a href="profil.php">Mon Profil</a>
+                        <a href="gestion_reservations.php">Mes Réservations</a>
+                        <div style="height: 1px; background: #eee; margin: 5px 0;"></div>
+                        <a href="deconnexion.php" style="color: #dc3545;">Déconnexion</a>
                     </div>
                 </div>
                 
-                <a href="panier.php" class="btn-primary panier-icon"><i class="fa-solid fa-shopping-cart"></i></a>
+                <a href="panier.php" class="btn-primary" style="background: #007BFF; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none;"><i class="fa-solid fa-shopping-cart"></i></a>
+            
             <?php else: ?>
-                <a href="connexion.php" class="btn-outline" style="color: #007BFF; border-color: #007BFF;">Se connecter</a>
+                <a href="connexion.php" class="btn-outline" style="color: #007BFF; border: 1px solid #007BFF; padding: 8px 15px; border-radius: 5px; text-decoration: none;">Se connecter</a>
             <?php endif; ?>
         </div>
     </header>
@@ -172,41 +197,50 @@ if (isset($_SESSION['id_utilisateur'])) {
                                 <span class="hotel-type-badge"><i class="fa-solid fa-bed"></i> <?= htmlspecialchars($heb['type']) ?></span>
                             <?php endif; ?>
                             
-                            <?php if(!empty($heb['image_illustration'])): ?>
-                                <img src="image/<?= htmlspecialchars($heb['image_illustration']) ?>" alt="<?= htmlspecialchars($heb['nom'] ?? 'Hébergement') ?>" onerror="this.src='image/default_hotel.jpg'">
-                            <?php else: ?>
-                                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 4em;">
-                                    <i class="fa-solid fa-hotel"></i>
-                                </div>
-                            <?php endif; ?>
+                            <!-- GESTION DE L'IMAGE DYNAMIQUE -->
+                            <?php 
+                                // On vérifie comment s'appelle la colonne dans ta BDD (image_illustration ou juste image)
+                                $image = !empty($heb['image_illustration']) ? $heb['image_illustration'] : (!empty($heb['image']) ? $heb['image'] : 'default.jpg');
+                            ?>
+                            <img src="image/<?= htmlspecialchars($image) ?>" alt="<?= htmlspecialchars($heb['nom'] ?? 'Hébergement') ?>" onerror="this.src='image/default.jpg'">
                         </div>
 
                         <div class="hotel-content">
-                            <h3 class="hotel-title">
-                                <?= htmlspecialchars($heb['nom'] ?? 'Hébergement') ?>
-                                <div class="hotel-stars">
-                                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                </div>
-                            </h3>
+    
+
+<h3 class="hotel-title">
+    <?= htmlspecialchars($heb['nom_hebergement'] ?? 'Hébergement non défini') ?>
+    <div class="hotel-stars">
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+    </div>
+</h3>
                             
+                            <!-- LA LOCALISATION -->
                             <div class="hotel-location">
                                 <i class="fa-solid fa-map-pin" style="color: #007BFF;"></i> 
                                 <?= htmlspecialchars($heb['ville'] ?? '') ?>, <?= htmlspecialchars($heb['pays'] ?? '') ?>
                             </div>
                             
+                            <!-- LA DESCRIPTION -->
                             <p class="hotel-desc">
-                                <?= !empty($heb['description']) ? htmlspecialchars(substr($heb['description'], 0, 120)) . '...' : 'Découvrez cet établissement idéalement situé pour profiter pleinement de votre séjour.' ?>
+                                <?php 
+                                    // On vérifie comment s'appelle la colonne description dans ta BDD
+                                    $desc = !empty($heb['description_courte']) ? $heb['description_courte'] : (!empty($heb['description']) ? $heb['description'] : 'Découvrez cet établissement idéalement situé pour profiter pleinement de votre séjour.');
+                                    echo htmlspecialchars(substr($desc, 0, 120)) . '...';
+                                ?>
                             </p>
                             
                             <div class="hotel-footer">
                                 <div class="hotel-price-block">
-                                    <div class="hotel-price">
-                                        <?= isset($heb['prix']) ? htmlspecialchars($heb['prix']) . ' €' : 'NC' ?> 
-                                        <span>/ nuit</span>
-                                    </div>
+                                  <div class="hotel-price">
+    <?php 
+        echo isset($heb['prix_nuit']) ? htmlspecialchars($heb['prix_nuit']) . ' €' : 'NC'; 
+    ?> 
+    <span>/ nuit</span>
+</div>
                                 </div>
                                 
-                                <a href="details_hebergement.php?id=<?= isset($heb['id_hebergement']) ? $heb['id_hebergement'] : '' ?>" class="btn-primary" style="padding: 10px 20px;">Voir les dispos</a>
+                                <a href="details_hebergement.php?id=<?= isset($heb['id_hebergement']) ? $heb['id_hebergement'] : '' ?>" class="btn-primary" style="background: #007BFF; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">Voir les dispos</a>
                             </div>
                         </div>
                     </div>
